@@ -6,13 +6,13 @@ COPY go.mod go.sum ./
 
 RUN go mod download
 
-COPY *.go ./d
+COPY *.go ./
 
 RUN CGO_ENABLED=0 GOOS=linux go build -o /kiyohime
 
 FROM build-stage AS run-stage
 
-RUN go test -v ./..
+RUN go test -v ./...
 
 FROM alpine:latest AS build-release-stage
 
