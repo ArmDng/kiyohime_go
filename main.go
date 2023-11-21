@@ -88,7 +88,7 @@ var (
 			// If the choice was "principale"
 			case "principale":
 				url = user.AvatarURL("512")
-				title = fmt.Sprintf("Avatar de %v", user.Username)
+				title = fmt.Sprintf("Avatar principal de %v", user.Username)
 
 			// If the choice was "serveur"
 			case "serveur":
