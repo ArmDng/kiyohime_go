@@ -46,6 +46,22 @@ var (
 					Description: "L'utilisateur dont vous voulez voir la pp",
 					Required:    true,
 				},
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "type",
+					Description: "Principale ou Serveur",
+					Required:    true,
+					Choices: []*discordgo.ApplicationCommandOptionChoice{
+						{
+							Name:  "Principale",
+							Value: "principale",
+						},
+						{
+							Name:  "Serveur",
+							Value: "serveur",
+						},
+					},
+				},
 			},
 		},
 	}
@@ -53,22 +69,58 @@ var (
 	commandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
 		"pp": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
+			var (
+				url   string
+				title string
+			)
+
+			// Getting the data needed from the slash commands pp
+			choiceOption := i.ApplicationCommandData().Options[1].StringValue()
 			userID := i.ApplicationCommandData().Options[0].UserValue(s).ID
 
+			// Getting the data of the user
 			user, err := s.User(userID)
 			if err != nil {
-				log.Fatalf("Unable to get the user")
+				log.Printf("Unable to retrieve the user: %v", err)
+			}
+
+			switch choiceOption {
+
+			// If the choice was "principale"
+			case "principale":
+				url = user.AvatarURL("512")
+				title = fmt.Sprintf("Avatar de %v", user.Username)
+
+			// If the choice was "serveur"
+			case "serveur":
+
+				// Getting the data of the member (user of a server)
+				member, err := s.GuildMember(*guildID, userID)
+				if err != nil {
+					log.Printf("Unable to retrieve the member: %v", err)
+					return
+				}
+
+				url = member.AvatarURL("512")
+				title = fmt.Sprintf("Avatar de serveur de %v", user.Username)
+
+			default:
+				log.Printf("Kiyohime s'est perdu dans la bibliothèque de Chaldea")
+				return
 			}
 
 			// Creation of the embed message
 
 			embed := &discordgo.MessageEmbed{
-				Title: fmt.Sprintf("Avatar de %v", user.Username),
+				Title: title,
 				Image: &discordgo.MessageEmbedImage{
-					URL: user.AvatarURL("512"),
+					URL: url,
 				},
 				Color: 0x00ff00,
 			}
+
+			// Responding to the command
+
 			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionResponseData{
@@ -89,36 +141,10 @@ func init() {
 	})
 }
 
-func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
-
-	// Ignore the function if the author of the message is the bot
-	if m.Author.ID == s.State.User.ID {
-		return
-	}
-
-	if m.Content == "Morgan" {
-
-		author := discordgo.MessageEmbedAuthor{
-			Name: "O.V.",
-		}
-
-		embed := discordgo.MessageEmbed{
-			Author: &author,
-			Title:  "Microbe",
-		}
-
-		s.ChannelMessageSendEmbed(m.ChannelID, &embed)
-	}
-
-	if m.Content == "Queen" {
-		s.ChannelMessageSend(m.ChannelID, "Morgan !")
-	}
-
-}
-
 func main() {
 
 	s.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
+
 		log.Printf("Kiyohime waked up as %v#%v", s.State.User.Username, s.State.User.Discriminator)
 	})
 
@@ -140,10 +166,8 @@ func main() {
 		registeredCommands[i] = cmd
 	}
 
-	s.AddHandler(messageCreate)
-
 	// Declare the intents
-	s.Identify.Intents = discordgo.IntentsAll
+	s.Identify.Intents = discordgo.IntentsMessageContent
 
 	// Close the discord session
 	defer s.Close()
@@ -154,7 +178,7 @@ func main() {
 	<-sc
 
 	if *removeCommands {
-		log.Println("rm")
+		log.Println("rm slash commands")
 
 		for _, v := range registeredCommands {
 			err := s.ApplicationCommandDelete(s.State.User.ID, *guildID, v.ID)
