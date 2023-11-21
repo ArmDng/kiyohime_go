@@ -63,7 +63,7 @@ var (
 			// Creation of the embed message
 
 			embed := &discordgo.MessageEmbed{
-				Title: "Avatar de l'utilisateur",
+				Title: fmt.Sprintf("Avatar de %v", user.Username),
 				Image: &discordgo.MessageEmbedImage{
 					URL: user.AvatarURL("512"),
 				},
@@ -143,7 +143,7 @@ func main() {
 	s.AddHandler(messageCreate)
 
 	// Declare the intents
-	s.Identify.Intents = discordgo.IntentsGuildMessages
+	s.Identify.Intents = discordgo.IntentsAll
 
 	// Close the discord session
 	defer s.Close()
