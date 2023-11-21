@@ -5,7 +5,7 @@ Bot Discord named Kiyohime that can display avatar of a user and a member using 
 ## Initialization
 
 
-# If you want to build it yourself
+### If you want to build it yourself
 
 Install discordgo to your working go environment
 
