@@ -36,6 +36,6 @@ For example
 
 To build your image, do :
 
-`docker build -t name_of_your_image:multistage`
+`docker build -t name_of_your_image:multistage .`
 
 Don't forget to put your discord token to run it
