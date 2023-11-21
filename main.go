@@ -37,17 +37,42 @@ var (
 
 	commands = []*discordgo.ApplicationCommand{
 		{
-			Name:        "bonjour",
-			Description: "Mystère et boule de gomme",
+			Name:        "pp",
+			Description: "Affiche la pp d'un utilisateur",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionUser,
+					Name:        "user",
+					Description: "L'utilisateur dont vous voulez voir la pp",
+					Required:    true,
+				},
+			},
 		},
 	}
 
 	commandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
-		"bonjour": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		"pp": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+
+			userID := i.ApplicationCommandData().Options[0].UserValue(s).ID
+
+			user, err := s.User(userID)
+			if err != nil {
+				log.Fatalf("Unable to get the user")
+			}
+
+			// Creation of the embed message
+
+			embed := &discordgo.MessageEmbed{
+				Title: "Avatar de l'utilisateur",
+				Image: &discordgo.MessageEmbedImage{
+					URL: user.AvatarURL("512"),
+				},
+				Color: 0x00ff00,
+			}
 			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionResponseData{
-					Content: "Au revoir",
+					Embeds: []*discordgo.MessageEmbed{embed},
 				},
 			})
 		},
