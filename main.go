@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -11,13 +12,56 @@ import (
 )
 
 var (
-	Token string
+	Token          = flag.String("DISCORD_TOKEN", "", "Bot Token")
+	guildID        = flag.String("GUILD_ID", "", "GUILD ID, If not passed - bot registers commands globally")
+	removeCommands = flag.Bool("rmcmd", true, "type 'false' to not remove command after extinction")
 )
 
-func init() {
+func init() { flag.Parse() }
 
-	flag.StringVar(&Token, "DISCORD_TOKEN", "", "Bot Token")
-	flag.Parse()
+func init() {
+	var err error
+
+	// Creation of the discord session with the bot token
+	s, err = discordgo.New("Bot " + *Token)
+	if err != nil {
+		log.Fatalf("Invalid bot parameters: %v", err)
+	}
+
+}
+
+var (
+	integerOptionMinValue          = 1.0
+	dmPermission                   = false
+	defaultMemberPermissions int64 = discordgo.PermissionSendMessages
+
+	commands = []*discordgo.ApplicationCommand{
+		{
+			Name:        "bonjour",
+			Description: "Mystère et boule de gomme",
+		},
+	}
+
+	commandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
+		"bonjour": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: "Au revoir",
+				},
+			})
+		},
+	}
+)
+
+var s *discordgo.Session
+
+func init() {
+	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
+			h(s, i)
+		}
+	})
 }
 
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -49,36 +93,52 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 func main() {
 
-	// Creation of the discord session with the bot token
+	s.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
+		log.Printf("Kiyohime waked up as %v#%v", s.State.User.Username, s.State.User.Discriminator)
+	})
 
-	dg, err := discordgo.New("Bot " + Token)
+	// Open a websocket connection to Discord
+	err := s.Open()
 	if err != nil {
-		fmt.Println("error creating discord session", err)
-		return
-	}
-
-	// call the func
-
-	dg.AddHandler(messageCreate)
-
-	// Declare the intents
-	dg.Identify.Intents = discordgo.IntentsGuildMessages
-
-	// Open a websocket connection to Discord and start listening
-	err = dg.Open()
-
-	if err != nil {
-		fmt.Println("error opening connection", err)
-		return
+		log.Fatalf("error connecting discord session: %v", err)
 	}
 
 	fmt.Println("Kiyohime is fighting. Ctrl-C to make her sleep")
+
+	registeredCommands := make([]*discordgo.ApplicationCommand, len(commands))
+
+	for i, v := range commands {
+		cmd, err := s.ApplicationCommandCreate(s.State.User.ID, *guildID, v)
+		if err != nil {
+			log.Panicf("Cannot create '%v' command: %v", v.Name, err)
+		}
+		registeredCommands[i] = cmd
+	}
+
+	s.AddHandler(messageCreate)
+
+	// Declare the intents
+	s.Identify.Intents = discordgo.IntentsGuildMessages
+
+	// Close the discord session
+	defer s.Close()
 
 	// If term signal is received
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
 
-	// Close the discord_session
-	dg.Close()
+	if *removeCommands {
+		log.Println("rm")
+
+		for _, v := range registeredCommands {
+			err := s.ApplicationCommandDelete(s.State.User.ID, *guildID, v.ID)
+			if err != nil {
+				log.Panicf("error deleting '%v' command: %v", v.Name, err)
+			}
+		}
+	}
+
+	log.Println("Good Night Master !")
+
 }
