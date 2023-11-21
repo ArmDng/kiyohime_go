@@ -12,9 +12,8 @@ import (
 )
 
 var (
-	Token          = flag.String("DISCORD_TOKEN", "", "Bot Token")
-	guildID        = flag.String("GUILD_ID", "", "GUILD ID, If not passed - bot registers commands globally")
-	removeCommands = flag.Bool("rmcmd", true, "type 'false' to not remove command after extinction")
+	Token          = os.Getenv("DISCORD_TOKEN")
+	removeCommands = os.Getenv("RMCMD")
 )
 
 func init() { flag.Parse() }
@@ -23,7 +22,7 @@ func init() {
 	var err error
 
 	// Creation of the discord session with the bot token
-	s, err = discordgo.New("Bot " + *Token)
+	s, err = discordgo.New("Bot " + Token)
 	if err != nil {
 		log.Fatalf("Invalid bot parameters: %v", err)
 	}
@@ -95,7 +94,7 @@ var (
 			case "serveur":
 
 				// Getting the data of the member (user of a server)
-				member, err := s.GuildMember(*guildID, userID)
+				member, err := s.GuildMember(getGuildID(s), userID)
 				if err != nil {
 					log.Printf("Unable to retrieve the member: %v", err)
 					return
@@ -133,6 +132,15 @@ var (
 
 var s *discordgo.Session
 
+func getGuildID(s *discordgo.Session) string {
+	guilds, err := s.UserGuilds(100, "", "")
+	if err != nil {
+		log.Fatalf("Unable to retrieve the Guild ID: %v", err)
+		return ""
+	}
+	return guilds[0].ID
+}
+
 func init() {
 	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
@@ -159,7 +167,7 @@ func main() {
 	registeredCommands := make([]*discordgo.ApplicationCommand, len(commands))
 
 	for i, v := range commands {
-		cmd, err := s.ApplicationCommandCreate(s.State.User.ID, *guildID, v)
+		cmd, err := s.ApplicationCommandCreate(s.State.User.ID, getGuildID(s), v)
 		if err != nil {
 			log.Panicf("Cannot create '%v' command: %v", v.Name, err)
 		}
@@ -169,19 +177,19 @@ func main() {
 	// Declare the intents
 	s.Identify.Intents = discordgo.IntentsMessageContent
 
-	// Close the discord session
 	defer s.Close()
+	// Close the discord session
 
 	// If term signal is received
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
 
-	if *removeCommands {
+	if removeCommands == "true" {
 		log.Println("rm slash commands")
 
 		for _, v := range registeredCommands {
-			err := s.ApplicationCommandDelete(s.State.User.ID, *guildID, v.ID)
+			err := s.ApplicationCommandDelete(s.State.User.ID, getGuildID(s), v.ID)
 			if err != nil {
 				log.Panicf("error deleting '%v' command: %v", v.Name, err)
 			}

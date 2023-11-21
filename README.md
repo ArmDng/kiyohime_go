@@ -20,15 +20,22 @@ Build it
 
 `go build`
 
-To use it, you will need 3 variables
+To use it, you will need 2 variables
 
 ```
--DISCORD_TOKEN 
--GUILD_ID (If there is no guild id, the bot will register the commands globally)
--rmcmd (remove commands after shutting down or not. By default, it's true. Type "false" to not remove)
+-DISCORD_TOKEN=YOUR_TOKEB
+-RMCMD=true (if you want to rm slash commands after extinction. If not, don't put it)
+
 ```
 
 For example
 
-`./kiyohime -DISCORD_TOKEN=YOUR TOKEN -GUILD_ID=YOUR GUILD_ID`
+` DISCORD_TOKEN=YOUR TOKEN ./kiyohime  `
 
+# Dockerfile
+
+To build your image, do :
+
+`docker build -t name_of_your_image:multistage`
+
+Don't forget to put your discord token to run it
