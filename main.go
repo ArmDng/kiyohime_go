@@ -94,7 +94,7 @@ var (
 			case "serveur":
 
 				// Getting the data of the member (user of a server)
-				member, err := s.GuildMember(getGuildID(s), userID)
+				member, err := s.GuildMember(i.GuildID, userID)
 				if err != nil {
 					log.Printf("Unable to retrieve the member: %v", err)
 					return
