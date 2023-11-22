@@ -69,8 +69,9 @@ var (
 		"pp": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 			var (
-				url   string
-				title string
+				url        string
+				title      string
+				typeAvatar string
 			)
 
 			// Getting the data needed from the slash commands pp
@@ -88,7 +89,7 @@ var (
 			// If the choice was "principale"
 			case "principale":
 				url = user.AvatarURL("512")
-				title = fmt.Sprintf("Avatar principal de %v", user.Username)
+				typeAvatar = "principale"
 
 			// If the choice was "serveur"
 			case "serveur":
@@ -101,7 +102,7 @@ var (
 				}
 
 				url = member.AvatarURL("512")
-				title = fmt.Sprintf("Avatar de serveur de %v", user.Username)
+				typeAvatar = "serveur"
 
 			default:
 				log.Printf("Kiyohime s'est perdu dans la bibliothèque de Chaldea")
@@ -114,6 +115,9 @@ var (
 				Title: title,
 				Image: &discordgo.MessageEmbedImage{
 					URL: url,
+				},
+				Footer: &discordgo.MessageEmbedFooter{
+					Text: fmt.Sprintf("%v, %v", user.Username, typeAvatar),
 				},
 				Color: 0x00ff00,
 			}
