@@ -63,6 +63,19 @@ var (
 				},
 			},
 		},
+
+		{
+			Name:        "bannière",
+			Description: "Affiche la bannière d'un utilisateur",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionUser,
+					Name:        "user",
+					Description: "L'utilisateur dont vous voulez voir la bannière",
+					Required:    true,
+				},
+			},
+		},
 	}
 
 	commandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
@@ -131,19 +144,48 @@ var (
 				},
 			})
 		},
+
+		"bannière": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+
+			var url string
+
+			// Getting the data needed from the slash commands pp
+
+			userID := i.ApplicationCommandData().Options[0].UserValue(s).ID
+
+			// Getting the data of the user
+			user, err := s.User(userID)
+			if err != nil {
+				log.Printf("Unable to retrieve the user: %v", err)
+			}
+
+			// Getting the URL of the banner
+			url = user.BannerURL("512")
+			// Creation of the embed message
+
+			embed := &discordgo.MessageEmbed{
+				Image: &discordgo.MessageEmbedImage{
+					URL: url,
+				},
+				Footer: &discordgo.MessageEmbedFooter{
+					Text: fmt.Sprintf("%v, %v", user.Username, "Bannière principale"),
+				},
+				Color: 0x00ff00,
+			}
+
+			// Responding to the command
+
+			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Embeds: []*discordgo.MessageEmbed{embed},
+				},
+			})
+		},
 	}
 )
 
 var s *discordgo.Session
-
-func getGuildID(s *discordgo.Session) string {
-	guilds, err := s.UserGuilds(100, "", "")
-	if err != nil {
-		log.Fatalf("Unable to retrieve the Guild ID: %v", err)
-		return ""
-	}
-	return guilds[0].ID
-}
 
 func init() {
 	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -189,7 +231,7 @@ func main() {
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
 
-	if removeCommands == "true" {
+	if removeCommands == "" {
 		log.Println("rm slash commands")
 
 		for _, v := range registeredCommands {
