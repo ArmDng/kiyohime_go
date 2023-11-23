@@ -63,6 +63,19 @@ var (
 				},
 			},
 		},
+
+		{
+			Name:        "bannière",
+			Description: "Affiche la bannière d'un utilisateur",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionUser,
+					Name:        "user",
+					Description: "L'utilisateur dont vous voulez voir la bannière",
+					Required:    true,
+				},
+			},
+		},
 	}
 
 	commandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
@@ -118,6 +131,44 @@ var (
 				},
 				Footer: &discordgo.MessageEmbedFooter{
 					Text: fmt.Sprintf("%v, %v", user.Username, typeAvatar),
+				},
+				Color: 0x00ff00,
+			}
+
+			// Responding to the command
+
+			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Embeds: []*discordgo.MessageEmbed{embed},
+				},
+			})
+		},
+
+		"bannière": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+
+			var url string
+
+			// Getting the data needed from the slash commands pp
+
+			userID := i.ApplicationCommandData().Options[0].UserValue(s).ID
+
+			// Getting the data of the user
+			user, err := s.User(userID)
+			if err != nil {
+				log.Printf("Unable to retrieve the user: %v", err)
+			}
+
+			// Getting the URL of the banner
+			url = user.BannerURL("512")
+			// Creation of the embed message
+
+			embed := &discordgo.MessageEmbed{
+				Image: &discordgo.MessageEmbedImage{
+					URL: url,
+				},
+				Footer: &discordgo.MessageEmbedFooter{
+					Text: fmt.Sprintf("%v, %v", user.Username, "Bannière principale"),
 				},
 				Color: 0x00ff00,
 			}
