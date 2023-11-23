@@ -202,7 +202,7 @@ func init() {
 }
 
 func sendMessageAtMidnight(s *discordgo.Session) {
-	s.ChannelMessageSend("1177329047542435960", "Transforming, Flame-Emitting Meditation")
+	s.ChannelMessageSend("747540564622442569", "Transforming, Flame-Emitting Meditation")
 }
 
 func sendMessageAt01(s *discordgo.Session) {
