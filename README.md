@@ -23,7 +23,7 @@ Build it
 To use it, you will need 2 variables
 
 ```
--DISCORD_TOKEN=YOUR_TOKEB
+-DISCORD_TOKEN=YOUR_TOKEN
 -RMCMD=true (if you want to rm slash commands after extinction. If not, don't put it)
 
 ```

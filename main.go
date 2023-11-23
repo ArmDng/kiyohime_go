@@ -30,11 +30,14 @@ func init() {
 }
 
 var (
+
+	// Definition of the different commands
 	integerOptionMinValue          = 1.0
 	dmPermission                   = false
 	defaultMemberPermissions int64 = discordgo.PermissionSendMessages
 
 	commands = []*discordgo.ApplicationCommand{
+		// Command to display the pfp of an user
 		{
 			Name:        "pp",
 			Description: "Affiche la pp d'un utilisateur",
@@ -63,6 +66,8 @@ var (
 				},
 			},
 		},
+
+		// Command for display the banner of an user
 
 		{
 			Name:        "bannière",
