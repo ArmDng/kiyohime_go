@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -200,6 +201,96 @@ func init() {
 	})
 }
 
+func sendMessageAtMidnight(s *discordgo.Session) {
+	s.ChannelMessageSend("1177329047542435960", "Transforming, Flame-Emitting Meditation")
+}
+
+func sendMessageAt01(s *discordgo.Session) {
+	s.ChannelMessageSend("747540564622442569", "Allez dormir bandes de truands")
+}
+
+func sendMessageAt02(s *discordgo.Session) {
+	s.ChannelMessageSend("747540564622442569", "Tsuki")
+}
+
+var isTaskSchedulded1 bool
+
+func scheduleTask1() {
+	if isTaskSchedulded1 {
+		return
+	}
+
+	now := time.Now()
+	nextMidnight := time.Date(now.Year(), now.Month(), now.Day(), 00, 00, 0, 0, now.Location())
+
+	if now.After(nextMidnight) {
+		nextMidnight = nextMidnight.Add(24 * time.Hour)
+	}
+
+	timeUntilNextTime := nextMidnight.Sub(now)
+
+	time.AfterFunc(timeUntilNextTime, func() {
+		sendMessageAtMidnight(s)
+		isTaskSchedulded1 = false
+
+		scheduleTask1()
+	})
+
+	isTaskSchedulded1 = true
+}
+
+var isTaskSchedulded2 bool
+
+func scheduleTask2() {
+	if isTaskSchedulded2 {
+		return
+	}
+
+	now := time.Now()
+	nextTime := time.Date(now.Year(), now.Month(), now.Day(), 02, 00, 0, 0, now.Location())
+
+	if now.After(nextTime) {
+		nextTime = nextTime.Add(24 * time.Hour)
+	}
+
+	timeUntilNextTime := nextTime.Sub(now)
+
+	time.AfterFunc(timeUntilNextTime, func() {
+		sendMessageAt02(s)
+		isTaskSchedulded2 = false
+
+		scheduleTask2()
+	})
+
+	isTaskSchedulded2 = true
+}
+
+var isTaskSchedulded3 bool
+
+func scheduleTask3() {
+	if isTaskSchedulded3 {
+		return
+	}
+
+	now := time.Now()
+	nextTime := time.Date(now.Year(), now.Month(), now.Day(), 01, 00, 0, 0, now.Location())
+
+	if now.After(nextTime) {
+		nextTime = nextTime.Add(24 * time.Hour)
+	}
+
+	timeUntilMidnight := nextTime.Sub(now)
+
+	time.AfterFunc(timeUntilMidnight, func() {
+		sendMessageAt02(s)
+		isTaskSchedulded3 = false
+
+		scheduleTask3()
+	})
+
+	isTaskSchedulded3 = true
+}
+
 func main() {
 
 	s.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
@@ -227,6 +318,8 @@ func main() {
 
 	// Declare the intents
 	s.Identify.Intents = discordgo.IntentsMessageContent
+
+	scheduleTask1()
 
 	defer s.Close()
 	// Close the discord session
