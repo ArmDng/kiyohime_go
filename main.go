@@ -187,15 +187,6 @@ var (
 
 var s *discordgo.Session
 
-func getGuildID(s *discordgo.Session) string {
-	guilds, err := s.UserGuilds(100, "", "")
-	if err != nil {
-		log.Fatalf("Unable to retrieve the Guild ID: %v", err)
-		return ""
-	}
-	return guilds[0].ID
-}
-
 func init() {
 	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
@@ -240,7 +231,7 @@ func main() {
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
 
-	if removeCommands == "true" {
+	if removeCommands == "" {
 		log.Println("rm slash commands")
 
 		for _, v := range registeredCommands {
