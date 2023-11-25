@@ -174,7 +174,7 @@ var (
 					URL: url,
 				},
 				Footer: &discordgo.MessageEmbedFooter{
-					Text: fmt.Sprintf("%v, %v", user.Username, "Bannière principale"),
+					Text: fmt.Sprintf("%v, %v", user.Username, "bannière principale"),
 				},
 				Color: 0x00ff00,
 			}
@@ -205,6 +205,10 @@ func sendMessageAtMidnight(s *discordgo.Session) {
 	s.ChannelMessageSend("747540564622442569", "Transforming, Flame-Emitting Meditation")
 }
 
+func sendMessageAtMidnight12(s *discordgo.Session) {
+	s.ChannelMessageSend("747540564622442569", "Bon app !!!")
+}
+
 func sendMessageAt01(s *discordgo.Session) {
 	s.ChannelMessageSend("747540564622442569", "Allez dormir bandes de truands")
 }
@@ -220,8 +224,13 @@ func scheduleTask1() {
 		return
 	}
 
-	now := time.Now()
-	nextMidnight := time.Date(now.Year(), now.Month(), now.Day(), 00, 00, 0, 0, now.Location())
+	parisLoc, err := time.LoadLocation("Europe/Paris")
+	if err != nil {
+		log.Fatalf("Error loading timezone")
+	}
+
+	now := time.Now().In(parisLoc)
+	nextMidnight := time.Date(now.Year(), now.Month(), now.Day(), 00, 00, 0, 0, parisLoc)
 
 	if now.After(nextMidnight) {
 		nextMidnight = nextMidnight.Add(24 * time.Hour)
@@ -246,8 +255,13 @@ func scheduleTask2() {
 		return
 	}
 
-	now := time.Now()
-	nextTime := time.Date(now.Year(), now.Month(), now.Day(), 02, 00, 0, 0, now.Location())
+	parisLoc, err := time.LoadLocation("Europe/Paris")
+	if err != nil {
+		log.Fatalf("Error loading timezone")
+	}
+
+	now := time.Now().In(parisLoc)
+	nextTime := time.Date(now.Year(), now.Month(), now.Day(), 02, 00, 0, 0, parisLoc)
 
 	if now.After(nextTime) {
 		nextTime = nextTime.Add(24 * time.Hour)
@@ -256,7 +270,7 @@ func scheduleTask2() {
 	timeUntilNextTime := nextTime.Sub(now)
 
 	time.AfterFunc(timeUntilNextTime, func() {
-		sendMessageAt02(s)
+		sendMessageAt01(s)
 		isTaskSchedulded2 = false
 
 		scheduleTask2()
@@ -272,8 +286,13 @@ func scheduleTask3() {
 		return
 	}
 
-	now := time.Now()
-	nextTime := time.Date(now.Year(), now.Month(), now.Day(), 01, 00, 0, 0, now.Location())
+	parisLoc, err := time.LoadLocation("Europe/Paris")
+	if err != nil {
+		log.Fatalf("Error loading timezone")
+	}
+
+	now := time.Now().In(parisLoc)
+	nextTime := time.Date(now.Year(), now.Month(), now.Day(), 01, 00, 0, 0, parisLoc)
 
 	if now.After(nextTime) {
 		nextTime = nextTime.Add(24 * time.Hour)
@@ -286,6 +305,37 @@ func scheduleTask3() {
 		isTaskSchedulded3 = false
 
 		scheduleTask3()
+	})
+
+	isTaskSchedulded3 = true
+}
+
+var isTaskSchedulded12 bool
+
+func scheduleTask12() {
+	if isTaskSchedulded12 {
+		return
+	}
+
+	parisLoc, err := time.LoadLocation("Europe/Paris")
+	if err != nil {
+		log.Fatalf("Error loading timezone")
+	}
+
+	now := time.Now().In(parisLoc)
+	nextTime := time.Date(now.Year(), now.Month(), now.Day(), 12, 00, 0, 0, parisLoc)
+
+	if now.After(nextTime) {
+		nextTime = nextTime.Add(24 * time.Hour)
+	}
+
+	timeUntilMidnight := nextTime.Sub(now)
+
+	time.AfterFunc(timeUntilMidnight, func() {
+		sendMessageAtMidnight12(s)
+		isTaskSchedulded12 = false
+
+		scheduleTask12()
 	})
 
 	isTaskSchedulded3 = true
@@ -320,6 +370,9 @@ func main() {
 	s.Identify.Intents = discordgo.IntentsMessageContent
 
 	scheduleTask1()
+	scheduleTask2()
+	scheduleTask3()
+	scheduleTask12()
 
 	defer s.Close()
 	// Close the discord session
