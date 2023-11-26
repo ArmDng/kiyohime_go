@@ -188,6 +188,42 @@ var (
 				},
 			})
 		},
+
+		"janken": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			embed := &discordgo.MessageEmbed{
+				Title:       "Janken",
+				Description: "Choisissez !",
+				Color:       0x00ff00,
+			}
+
+			buttons := []discordgo.MessageComponent{
+				discordgo.Button{
+					Label:    "Pierre",
+					CustomID: "rock",
+					Style:    discordgo.PrimaryButton,
+				},
+				discordgo.Button{
+					Label:    "Papier",
+					CustomID: "paper",
+					Style:    discordgo.PrimaryButton,
+				},
+				discordgo.Button{
+					Label:    "Ciseaux",
+					CustomID: "scissors",
+					Style:    discordgo.PrimaryButton,
+				},
+			}
+
+			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Embeds: []*discordgo.MessageEmbed{embed},
+					Components: []discordgo.MessageComponent{
+						discordgo.ActionsRow{Components: buttons},
+					},
+				},
+			})
+		},
 	}
 )
 
