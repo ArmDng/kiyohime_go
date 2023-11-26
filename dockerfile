@@ -20,4 +20,7 @@ WORKDIR /
 
 COPY --from=build-stage /kiyohime /kiyohime
 
+RUN apk --no-cache add tzdata
+
+
 ENTRYPOINT [ "./kiyohime" ]
