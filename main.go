@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
 	"os/signal"
 	"syscall"
@@ -31,6 +32,17 @@ func init() {
 }
 
 var (
+	componentsHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
+		"rock": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			handleJanken(s, i, "rock")
+		},
+		"paper": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			handleJanken(s, i, "paper")
+		},
+		"scissors": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			handleJanken(s, i, "scissors")
+		},
+	}
 
 	// Definition of the different commands
 	integerOptionMinValue          = 1.0
@@ -231,10 +243,54 @@ var s *discordgo.Session
 
 func init() {
 	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
-			h(s, i)
+		switch i.Type {
+		case discordgo.InteractionApplicationCommand:
+			if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
+				h(s, i)
+			}
+		case discordgo.InteractionMessageComponent:
+			if h, ok := commandHandlers[i.MessageComponentData().CustomID]; ok {
+				h(s, i)
+			}
 		}
+
 	})
+}
+
+func handleJanken(s *discordgo.Session, i *discordgo.InteractionCreate, userChoice string) {
+	user, err := s.User(i.Interaction.User.ID)
+
+	if err != nil {
+		log.Fatalf("Unable to retrieve the User: %v", err)
+	}
+
+	botChoices := []string{"rock", "paper", "scissors"}
+	botChoice := botChoices[rand.Intn(len(botChoices))]
+
+	result := determineWinner(userChoice, botChoice)
+
+	response := fmt.Sprintf("Cher %v, j'ai l'honneur d'annoncer que %v", user.Username, result)
+
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: response,
+		},
+	})
+
+}
+
+func determineWinner(userChoice, botChoice string) string {
+	switch {
+	case userChoice == botChoice:
+		return "Égalité"
+	case (userChoice == "rock" && botChoice == "scissors") ||
+		(userChoice == "paper" && botChoice == "rock") ||
+		(userChoice == "scissors" && botChoice == "paper"):
+		return "vous avez gagné !"
+	default:
+		return "vous avez perdu !"
+	}
 }
 
 func sendMessageAtMidnight(s *discordgo.Session) {
