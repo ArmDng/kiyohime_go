@@ -108,7 +108,7 @@ var (
 			// If the choice was "principale"
 			case "principale":
 				url = user.AvatarURL("512")
-				typeAvatar = "principale"
+				typeAvatar = "Principale"
 
 			// If the choice was "serveur"
 			case "serveur":
@@ -121,7 +121,7 @@ var (
 				}
 
 				url = member.AvatarURL("512")
-				typeAvatar = "serveur"
+				typeAvatar = "Serveur"
 
 			default:
 				log.Printf("Kiyohime s'est perdu dans la bibliothèque de Chaldea")
@@ -174,7 +174,7 @@ var (
 					URL: url,
 				},
 				Footer: &discordgo.MessageEmbedFooter{
-					Text: fmt.Sprintf("%v, %v", user.Username, "bannière principale"),
+					Text: fmt.Sprintf("%v, %v", user.Username, "Bannière principale"),
 				},
 				Color: 0x00ff00,
 			}
