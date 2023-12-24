@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"math/rand"
@@ -18,7 +17,7 @@ var (
 	removeCommands = os.Getenv("RMCMD")
 )
 
-func init() { flag.Parse() }
+var s *discordgo.Session
 
 func init() {
 	var err error
@@ -34,65 +33,55 @@ func init() {
 var (
 	componentsHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
 		"rock": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-			handleJanken(s, i, "rock")
+
+			userChoice := "rock"
+
+			winner := manageJanken(userChoice)
+
+			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: fmt.Sprintf("%s", winner),
+				},
+			})
+			if err != nil {
+				log.Panicf("Unable to respond to the interaction: %v", err)
+			}
 		},
+
 		"paper": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-			handleJanken(s, i, "paper")
+
+			userChoice := "paper"
+
+			winner := manageJanken(userChoice)
+
+			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: fmt.Sprintf("%s", winner),
+				},
+			})
+			if err != nil {
+				log.Panicf("Unable to respond to the interaction: %v", err)
+			}
 		},
+
 		"scissors": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-			handleJanken(s, i, "scissors")
-		},
-	}
 
-	// Definition of the different commands
-	integerOptionMinValue          = 1.0
-	dmPermission                   = false
-	defaultMemberPermissions int64 = discordgo.PermissionSendMessages
+			userChoice := "scissors"
 
-	commands = []*discordgo.ApplicationCommand{
-		// Command to display the pfp of an user
-		{
-			Name:        "pp",
-			Description: "Affiche la pp d'un utilisateur",
-			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Type:        discordgo.ApplicationCommandOptionUser,
-					Name:        "user",
-					Description: "L'utilisateur dont vous voulez voir la pp",
-					Required:    true,
+			winner := manageJanken(userChoice)
+
+			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: fmt.Sprintf("%s & %s", winner, i.Interaction.ID),
 				},
-				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "type",
-					Description: "Principale ou Serveur",
-					Required:    true,
-					Choices: []*discordgo.ApplicationCommandOptionChoice{
-						{
-							Name:  "Principale",
-							Value: "principale",
-						},
-						{
-							Name:  "Serveur",
-							Value: "serveur",
-						},
-					},
-				},
-			},
-		},
+			})
+			if err != nil {
+				log.Panicf("Unable to respond to the interaction: %v", err)
+			}
 
-		// Command for display the banner of an user
-
-		{
-			Name:        "bannière",
-			Description: "Affiche la bannière d'un utilisateur",
-			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Type:        discordgo.ApplicationCommandOptionUser,
-					Name:        "user",
-					Description: "L'utilisateur dont vous voulez voir la bannière",
-					Required:    true,
-				},
-			},
 		},
 	}
 
@@ -201,96 +190,157 @@ var (
 			})
 		},
 
-		"janken": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		"mystère": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+
 			embed := &discordgo.MessageEmbed{
-				Title:       "Janken",
-				Description: "Choisissez !",
+				Title:       "Prépare-toi !",
+				Description: fmt.Sprintf("Choisis ! %s", i.Interaction.ID),
 				Color:       0x00ff00,
 			}
 
-			buttons := []discordgo.MessageComponent{
-				discordgo.Button{
-					Label:    "Pierre",
-					CustomID: "rock",
-					Style:    discordgo.PrimaryButton,
-				},
-				discordgo.Button{
-					Label:    "Papier",
-					CustomID: "paper",
-					Style:    discordgo.PrimaryButton,
-				},
-				discordgo.Button{
-					Label:    "Ciseaux",
-					CustomID: "scissors",
-					Style:    discordgo.PrimaryButton,
-				},
+			components := []discordgo.MessageComponent{
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					discordgo.Button{
+						Label:    "bouton1",
+						Style:    discordgo.SuccessButton,
+						Disabled: false,
+						CustomID: "button1",
+					},
+
+					discordgo.Button{
+						Label:    "Bouton2",
+						Style:    discordgo.DangerButton,
+						Disabled: false,
+						CustomID: "button2",
+					},
+
+					discordgo.Button{
+						Label:    "Bouton3",
+						Style:    discordgo.SecondaryButton,
+						Disabled: false,
+						CustomID: "button3",
+					},
+				}},
 			}
 
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionResponseData{
-					Embeds: []*discordgo.MessageEmbed{embed},
-					Components: []discordgo.MessageComponent{
-						discordgo.ActionsRow{Components: buttons},
-					},
+					Embeds:     []*discordgo.MessageEmbed{embed},
+					Components: components,
 				},
 			})
+
+			if err != nil {
+				log.Panicf("Unable to respond to the interaction: %v", err)
+			}
+
+		},
+	}
+
+	// Definition of the different commands
+	integerOptionMinValue          = 1.0
+	dmPermission                   = false
+	defaultMemberPermissions int64 = discordgo.PermissionAll
+
+	commands = []*discordgo.ApplicationCommand{
+		// Command to display the pfp of an user
+		{
+			Name:        "pp",
+			Description: "Affiche la pp d'un utilisateur",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionUser,
+					Name:        "user",
+					Description: "L'utilisateur dont vous voulez voir la pp",
+					Required:    true,
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "type",
+					Description: "Principale ou Serveur",
+					Required:    true,
+					Choices: []*discordgo.ApplicationCommandOptionChoice{
+						{
+							Name:  "Principale",
+							Value: "principale",
+						},
+						{
+							Name:  "Serveur",
+							Value: "serveur",
+						},
+					},
+				},
+			},
+		},
+
+		// Command for display the banner of an user
+
+		{
+			Name:        "bannière",
+			Description: "Affiche la bannière d'un utilisateur",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionUser,
+					Name:        "user",
+					Description: "L'utilisateur dont vous voulez voir la bannière",
+					Required:    true,
+				},
+			},
+		},
+
+		{
+			Name:        "janken",
+			Description: "Je te défie au Pierre Feuille Ciseaux",
 		},
 	}
 )
 
-var s *discordgo.Session
+func manageJanken(userChoice string) string {
+	var botChoice string
+	var winner string
+	botNumChoice := rand.Intn(3)
 
-func init() {
-	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		switch i.Type {
-		case discordgo.InteractionApplicationCommand:
-			if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
-				h(s, i)
-			}
-		case discordgo.InteractionMessageComponent:
-			if h, ok := commandHandlers[i.MessageComponentData().CustomID]; ok {
-				h(s, i)
-			}
+	switch botNumChoice {
+	case 0:
+		botChoice = "rock"
+	case 1:
+		botChoice = "paper"
+	case 2:
+		botChoice = "scissors"
+	}
+
+	switch userChoice {
+	case "rock":
+		switch botChoice {
+		case "rock":
+			winner = "Égalité mais je t'aurais la prochaine fois !"
+		case "paper":
+			winner = "J'ai gagné !"
+		case "scissors":
+			winner = "Nice victoire pour toi !"
 		}
-
-	})
-}
-
-func handleJanken(s *discordgo.Session, i *discordgo.InteractionCreate, userChoice string) {
-	user, err := s.User(i.Interaction.User.ID)
-
-	if err != nil {
-		log.Fatalf("Unable to retrieve the User: %v", err)
+	case "paper":
+		switch botChoice {
+		case "rock":
+			winner = "Égalité mais je t'aurais la prochaine fois !"
+		case "paper":
+			winner = "J'ai gagné !"
+		case "scissors":
+			winner = "Nice victoire pour toi !"
+		}
+	case "scissors":
+		switch botChoice {
+		case "rock":
+			winner = "Égalité mais je t'aurais la prochaine fois !"
+		case "paper":
+			winner = "J'ai gagné !"
+		case "scissors":
+			winner = "Nice victoire pour toi !"
+		}
 	}
 
-	botChoices := []string{"rock", "paper", "scissors"}
-	botChoice := botChoices[rand.Intn(len(botChoices))]
-
-	result := determineWinner(userChoice, botChoice)
-
-	response := fmt.Sprintf("Cher %v, j'ai l'honneur d'annoncer que %v", user.Username, result)
-
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: response,
-		},
-	})
-
-}
-
-func determineWinner(userChoice, botChoice string) string {
-	switch {
-	case userChoice == botChoice:
-		return "Égalité"
-	case (userChoice == "rock" && botChoice == "scissors") ||
-		(userChoice == "paper" && botChoice == "rock") ||
-		(userChoice == "scissors" && botChoice == "paper"):
-		return "vous avez gagné !"
-	default:
-		return "vous avez perdu !"
-	}
+	return winner
 }
 
 func sendMessageAtMidnight(s *discordgo.Session) {
@@ -433,11 +483,32 @@ func scheduleTask12() {
 	isTaskSchedulded3 = true
 }
 
+func scheduleAllTasks() {
+	scheduleTask1()
+	scheduleTask2()
+	scheduleTask3()
+	scheduleTask12()
+}
+
 func main() {
 
 	s.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
 
 		log.Printf("Kiyohime waked up as %v#%v", s.State.User.Username, s.State.User.Discriminator)
+	})
+
+	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		switch i.Type {
+		case discordgo.InteractionApplicationCommand:
+			if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
+				h(s, i)
+			}
+		case discordgo.InteractionMessageComponent:
+			if h, ok := componentsHandlers[i.MessageComponentData().CustomID]; ok {
+				h(s, i)
+			}
+		}
+
 	})
 
 	// Open a websocket connection to Discord
@@ -459,13 +530,9 @@ func main() {
 	}
 
 	// Declare the intents
-	s.Identify.Intents = discordgo.IntentsMessageContent
+	s.Identify.Intents = discordgo.IntentsAll
 
-	scheduleTask1()
-	scheduleTask2()
-	scheduleTask3()
-	scheduleTask12()
-
+	scheduleAllTasks()
 	defer s.Close()
 	// Close the discord session
 
