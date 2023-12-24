@@ -219,7 +219,7 @@ func sendMessageAt02(s *discordgo.Session) {
 
 var isTaskSchedulded1 bool
 
-func scheduleTask1() {
+func scheduleTaskatMidnight() {
 	if isTaskSchedulded1 {
 		return
 	}
@@ -242,7 +242,7 @@ func scheduleTask1() {
 		sendMessageAtMidnight(s)
 		isTaskSchedulded1 = false
 
-		scheduleTask1()
+		scheduleTaskatMidnight()
 	})
 
 	isTaskSchedulded1 = true
@@ -250,7 +250,7 @@ func scheduleTask1() {
 
 var isTaskSchedulded2 bool
 
-func scheduleTask2() {
+func scheduleTaskat01() {
 	if isTaskSchedulded2 {
 		return
 	}
@@ -273,7 +273,7 @@ func scheduleTask2() {
 		sendMessageAt01(s)
 		isTaskSchedulded2 = false
 
-		scheduleTask2()
+		scheduleTaskat01()
 	})
 
 	isTaskSchedulded2 = true
@@ -281,7 +281,7 @@ func scheduleTask2() {
 
 var isTaskSchedulded3 bool
 
-func scheduleTask3() {
+func scheduleTaskat02() {
 	if isTaskSchedulded3 {
 		return
 	}
@@ -304,7 +304,7 @@ func scheduleTask3() {
 		sendMessageAt02(s)
 		isTaskSchedulded3 = false
 
-		scheduleTask3()
+		scheduleTaskat02()
 	})
 
 	isTaskSchedulded3 = true
@@ -312,7 +312,7 @@ func scheduleTask3() {
 
 var isTaskSchedulded12 bool
 
-func scheduleTask12() {
+func scheduleTaskat12() {
 	if isTaskSchedulded12 {
 		return
 	}
@@ -335,7 +335,7 @@ func scheduleTask12() {
 		sendMessageAtMidnight12(s)
 		isTaskSchedulded12 = false
 
-		scheduleTask12()
+		scheduleTaskat12()
 	})
 
 	isTaskSchedulded3 = true
@@ -369,10 +369,10 @@ func main() {
 	// Declare the intents
 	s.Identify.Intents = discordgo.IntentsMessageContent
 
-	scheduleTask1()
-	scheduleTask2()
-	scheduleTask3()
-	scheduleTask12()
+	scheduleTaskatMidnight()
+	scheduleTaskat01()
+	scheduleTaskat02()
+	scheduleTaskat12()
 
 	defer s.Close()
 	// Close the discord session
