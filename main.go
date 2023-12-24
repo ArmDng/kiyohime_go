@@ -202,19 +202,19 @@ func init() {
 }
 
 func sendMessageAtMidnight(s *discordgo.Session) {
-	s.ChannelMessageSend("747540564622442569", "Transforming, Flame-Emitting Meditation")
+	s.ChannelMessageSend("747540564622442569", "Joyeux réveillon !!!!!")
 }
 
 func sendMessageAtMidnight12(s *discordgo.Session) {
-	s.ChannelMessageSend("747540564622442569", "Bon app !!!")
+	s.ChannelMessageSend("747540564622442569", "Je vous aime tous !")
 }
 
 func sendMessageAt01(s *discordgo.Session) {
-	s.ChannelMessageSend("747540564622442569", "Allez dormir bandes de truands")
+	s.ChannelMessageSend("747540564622442569", "Coeur sur vous !")
 }
 
 func sendMessageAt02(s *discordgo.Session) {
-	s.ChannelMessageSend("747540564622442569", "Tsuki")
+	s.ChannelMessageSend("747540564622442569", "Tsukihime")
 }
 
 var isTaskSchedulded1 bool
