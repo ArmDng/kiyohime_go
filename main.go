@@ -202,7 +202,7 @@ func init() {
 }
 
 func sendMessageAtMidnight(s *discordgo.Session) {
-	s.ChannelMessageSend("747540564622442569", "Joyeux réveillon !!!!!")
+	s.ChannelMessageSend("747540564622442569", "Coeur sur Jeanne")
 }
 
 func sendMessageAtMidnight12(s *discordgo.Session) {
