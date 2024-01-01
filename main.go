@@ -201,8 +201,61 @@ func init() {
 	})
 }
 
+var scheduledTimes = make(map[string]bool)
+
+func sendMessageAtDate(s *discordgo.Session, date string, message string, channel string) {
+	// Check if the message has already been scheduled for the current hour
+	if scheduledTimes[date] {
+		log.Println("The message has already been scheduled for the current hour")
+		return
+	}
+	// Parsing the date string
+	layout := "15:04"
+	parisLoc, err := time.LoadLocation("Europe/Paris")
+	if err != nil {
+		log.Fatalf("Error loading timezone")
+	}
+
+	t, err := time.ParseInLocation(layout, date, parisLoc)
+	if err != nil {
+		log.Fatalf("Error parsing date: %v", err)
+	}
+
+	// Checking if the current time is after the specified date
+	now := time.Now().In(parisLoc)
+
+	t = time.Date(now.Year(), now.Month(), now.Day(), t.Hour(), t.Minute(), 0, 0, parisLoc)
+
+	log.Printf("The current time is %v", now)
+	log.Printf("The specified time is %v", t)
+	// If the specified time is in the past, add 24 hours to it
+	if now.After(t) {
+		log.Printf("The specified time is in the past, adding 24 hours to it")
+		t = t.Add(24 * time.Hour)
+	}
+	// Scheduling the message to be sent at the specified date
+	time.AfterFunc(t.Sub(now), func() {
+		// Send the message
+		s.ChannelMessageSend(channel, message)
+		log.Printf("Message sent at %v", t)
+
+		// Mark the message as scheduled for the current hour
+		scheduledTimes[date] = false
+
+		// Schedule the message for the next day
+		sendMessageAtDate(s, date, message, channel)
+	})
+	scheduledTimes[date] = true
+}
+func sendAutoMessage(s *discordgo.Session) {
+	sendMessageAtDate(s, "23:00", "Votre avis sur Skadi ?", "747540564622442569")
+	sendMessageAtDate(s, "00:00", "Coeur sur Jeanne", "747540564622442569")
+	sendMessageAtDate(s, "01:00", "https://youtu.be/uhxTSOSTh6A", "747540564622442569")
+	sendMessageAtDate(s, "02:00", "Tu brilles", "747540564622442569")
+}
+
 func sendMessageAtMidnight(s *discordgo.Session) {
-	s.ChannelMessageSend("747540564622442569", "Coeur sur Jeanne")
+	s.ChannelMessageSend("747540564622442569", "Coeur sur Jeanne + Je vous souhaite une merveilleuse année 2024 !")
 }
 
 func sendMessageAtMidnight12(s *discordgo.Session) {
@@ -368,11 +421,13 @@ func main() {
 
 	// Declare the intents
 	s.Identify.Intents = discordgo.IntentsMessageContent
-
-	scheduleTaskatMidnight()
-	scheduleTaskat01()
-	scheduleTaskat02()
-	scheduleTaskat12()
+	/*
+		scheduleTaskatMidnight()
+		scheduleTaskat01()
+		scheduleTaskat02()
+		scheduleTaskat12()
+	*/
+	sendAutoMessage(s)
 
 	defer s.Close()
 	// Close the discord session
