@@ -248,11 +248,8 @@ func sendMessageAtDate(s *discordgo.Session, date string, message string, channe
 	scheduledTimes[date] = true
 }
 func sendAutoMessage(s *discordgo.Session) {
-	sendMessageAtDate(s, "12:00", "Regarde une chouette ", "747540564622442569")
-	sendMessageAtDate(s, "23:00", "Votre avis sur Skadi ?", "747540564622442569")
-	sendMessageAtDate(s, "00:00", "Coeur sur Jeanne", "747540564622442569")
-	sendMessageAtDate(s, "01:00", "https://youtu.be/uhxTSOSTh6A", "747540564622442569")
-	sendMessageAtDate(s, "02:00", "Tu brilles", "747540564622442569")
+	sendMessageAtDate(s, "12:00", "*Regarde* ", "747540564622442569")
+	sendMessageAtDate(s, "00:00", "Faîtes de beaux rêves", "747540564622442569")
 }
 
 func sendMessageAtMidnight(s *discordgo.Session) {
