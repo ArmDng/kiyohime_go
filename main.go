@@ -249,6 +249,7 @@ func sendMessageAtDate(s *discordgo.Session, date string, message string, channe
 }
 func sendAutoMessage(s *discordgo.Session) {
 	sendMessageAtDate(s, "12:00", "*Regarde* ", "747540564622442569")
+
 	sendMessageAtDate(s, "00:00", "Faîtes de beaux rêves", "747540564622442569")
 }
 
