@@ -31,11 +31,14 @@ func init() {
 }
 
 var (
+
+	// Definition of the different commands
 	integerOptionMinValue          = 1.0
 	dmPermission                   = false
 	defaultMemberPermissions int64 = discordgo.PermissionSendMessages
 
 	commands = []*discordgo.ApplicationCommand{
+		// Command to display the pfp of an user
 		{
 			Name:        "pp",
 			Description: "Affiche la pp d'un utilisateur",
@@ -64,14 +67,30 @@ var (
 				},
 			},
 		},
+
+		// Command for display the banner of an user
+
+		{
+			Name:        "bannière",
+			Description: "Affiche la bannière d'un utilisateur",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionUser,
+					Name:        "user",
+					Description: "L'utilisateur dont vous voulez voir la bannière",
+					Required:    true,
+				},
+			},
+		},
 	}
 
 	commandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
 		"pp": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 			var (
-				url   string
-				title string
+				url        string
+				title      string
+				typeAvatar string
 			)
 
 			// Getting the data needed from the slash commands pp
@@ -89,20 +108,20 @@ var (
 			// If the choice was "principale"
 			case "principale":
 				url = user.AvatarURL("512")
-				title = fmt.Sprintf("Avatar de %v", user.Username)
+				typeAvatar = "Principale"
 
 			// If the choice was "serveur"
 			case "serveur":
 
 				// Getting the data of the member (user of a server)
-				member, err := s.GuildMember(getGuildID(s), userID)
+				member, err := s.GuildMember(i.GuildID, userID)
 				if err != nil {
 					log.Printf("Unable to retrieve the member: %v", err)
 					return
 				}
 
 				url = member.AvatarURL("512")
-				title = fmt.Sprintf("Avatar de serveur de %v", user.Username)
+				typeAvatar = "Serveur"
 
 			default:
 				log.Printf("Kiyohime s'est perdu dans la bibliothèque de Chaldea")
@@ -115,6 +134,47 @@ var (
 				Title: title,
 				Image: &discordgo.MessageEmbedImage{
 					URL: url,
+				},
+				Footer: &discordgo.MessageEmbedFooter{
+					Text: fmt.Sprintf("%v, %v", user.Username, typeAvatar),
+				},
+				Color: 0x00ff00,
+			}
+
+			// Responding to the command
+
+			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Embeds: []*discordgo.MessageEmbed{embed},
+				},
+			})
+		},
+
+		"bannière": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+
+			var url string
+
+			// Getting the data needed from the slash commands pp
+
+			userID := i.ApplicationCommandData().Options[0].UserValue(s).ID
+
+			// Getting the data of the user
+			user, err := s.User(userID)
+			if err != nil {
+				log.Printf("Unable to retrieve the user: %v", err)
+			}
+
+			// Getting the URL of the banner
+			url = user.BannerURL("512")
+			// Creation of the embed message
+
+			embed := &discordgo.MessageEmbed{
+				Image: &discordgo.MessageEmbedImage{
+					URL: url,
+				},
+				Footer: &discordgo.MessageEmbedFooter{
+					Text: fmt.Sprintf("%v, %v", user.Username, "Bannière principale"),
 				},
 				Color: 0x00ff00,
 			}
@@ -132,15 +192,6 @@ var (
 )
 
 var s *discordgo.Session
-
-func getGuildID(s *discordgo.Session) string {
-	guilds, err := s.UserGuilds(100, "", "")
-	if err != nil {
-		log.Fatalf("Unable to retrieve the Guild ID: %v", err)
-		return ""
-	}
-	return guilds[0].ID
-}
 
 func init() {
 	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -197,7 +248,8 @@ func sendMessageAtDate(s *discordgo.Session, date string, message string, channe
 	scheduledTimes[date] = true
 }
 func sendAutoMessage(s *discordgo.Session) {
-	sendMessageAtDate(s, "12:00", "*Regarde*", "747540564622442569")
+	sendMessageAtDate(s, "12:00", "*Regarde* ", "747540564622442569")
+
 	sendMessageAtDate(s, "00:00", "Faîtes de beaux rêves", "747540564622442569")
 }
 
@@ -359,7 +411,7 @@ func main() {
 	registeredCommands := make([]*discordgo.ApplicationCommand, len(commands))
 
 	for i, v := range commands {
-		cmd, err := s.ApplicationCommandCreate(s.State.User.ID, getGuildID(s), v)
+		cmd, err := s.ApplicationCommandCreate(s.State.User.ID, "", v)
 		if err != nil {
 			log.Panicf("Cannot create '%v' command: %v", v.Name, err)
 		}
@@ -368,6 +420,13 @@ func main() {
 
 	// Declare the intents
 	s.Identify.Intents = discordgo.IntentsMessageContent
+	/*
+		scheduleTaskatMidnight()
+		scheduleTaskat01()
+		scheduleTaskat02()
+		scheduleTaskat12()
+	*/
+	sendAutoMessage(s)
 
 	defer s.Close()
 	// Close the discord session
@@ -377,11 +436,11 @@ func main() {
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
 
-	if removeCommands == "true" {
+	if removeCommands == "" {
 		log.Println("rm slash commands")
 
 		for _, v := range registeredCommands {
-			err := s.ApplicationCommandDelete(s.State.User.ID, getGuildID(s), v.ID)
+			err := s.ApplicationCommandDelete(s.State.User.ID, "", v.ID)
 			if err != nil {
 				log.Panicf("error deleting '%v' command: %v", v.Name, err)
 			}

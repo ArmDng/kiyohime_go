@@ -23,7 +23,7 @@ Build it
 To use it, you will need 2 variables
 
 ```
--DISCORD_TOKEN=YOUR_TOKEB
+-DISCORD_TOKEN=YOUR_TOKEN
 -RMCMD=true (if you want to rm slash commands after extinction. If not, don't put it)
 
 ```
@@ -32,10 +32,10 @@ For example
 
 ` DISCORD_TOKEN=YOUR TOKEN ./kiyohime  `
 
-# Dockerfile
+### Dockerfile
 
 To build your image, do :
 
-`docker build -t name_of_your_image:multistage`
+`docker build -t name_of_your_image:multistage .`
 
 Don't forget to put your discord token to run it
