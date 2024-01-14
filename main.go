@@ -32,14 +32,21 @@ func init() {
 
 var (
 	componentsHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
+
 		"rock": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
+			if i.Member.User.ID != i.Message.Interaction.User.ID {
+				s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+					Type: discordgo.InteractionResponseDeferredMessageUpdate,
+				})
+				return
+			}
 			userChoice := "rock"
 
 			winner := manageJanken(userChoice)
 
 			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Type: discordgo.InteractionResponseUpdateMessage,
 				Data: &discordgo.InteractionResponseData{
 					Content: fmt.Sprintf("%s", winner),
 				},
@@ -47,16 +54,23 @@ var (
 			if err != nil {
 				log.Panicf("Unable to respond to the interaction: %v", err)
 			}
+
 		},
 
 		"paper": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
+			if i.Member.User.ID != i.Message.Interaction.User.ID {
+				s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+					Type: discordgo.InteractionResponseDeferredMessageUpdate,
+				})
+				return
+			}
 			userChoice := "paper"
 
 			winner := manageJanken(userChoice)
 
 			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Type: discordgo.InteractionResponseUpdateMessage,
 				Data: &discordgo.InteractionResponseData{
 					Content: fmt.Sprintf("%s", winner),
 				},
@@ -64,18 +78,24 @@ var (
 			if err != nil {
 				log.Panicf("Unable to respond to the interaction: %v", err)
 			}
+
 		},
 
 		"scissors": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-
+			if i.Member.User.ID != i.Message.Interaction.User.ID {
+				s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+					Type: discordgo.InteractionResponseDeferredMessageUpdate,
+				})
+				return
+			}
 			userChoice := "scissors"
 
 			winner := manageJanken(userChoice)
 
 			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Type: discordgo.InteractionResponseUpdateMessage,
 				Data: &discordgo.InteractionResponseData{
-					Content: fmt.Sprintf("%s & %s", winner, i.Interaction.ID),
+					Content: fmt.Sprintf("%s", winner),
 				},
 			})
 			if err != nil {
@@ -190,35 +210,39 @@ var (
 			})
 		},
 
-		"mystère": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		"Janken": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 			embed := &discordgo.MessageEmbed{
 				Title:       "Prépare-toi !",
-				Description: fmt.Sprintf("Choisis ! %s", i.Interaction.ID),
+				Description: "Choisis",
 				Color:       0x00ff00,
 			}
 
 			components := []discordgo.MessageComponent{
 				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 					discordgo.Button{
-						Label:    "bouton1",
+						// Label is what the user will see on the button.
+						Label: "Pierre",
+						// Style provides coloring of the button. There are not so many styles tho.
+						Style: discordgo.SuccessButton,
+						// Disabled allows bot to disable some buttons for users.
+						Disabled: false,
+						// CustomID is a thing telling Discord which data to send when this button will be pressed.
+						CustomID: "rock",
+					},
+
+					discordgo.Button{
+						Label:    "Papiers",
 						Style:    discordgo.SuccessButton,
 						Disabled: false,
-						CustomID: "button1",
+						CustomID: "paper",
 					},
 
 					discordgo.Button{
-						Label:    "Bouton2",
-						Style:    discordgo.DangerButton,
+						Label:    "Ciseaux",
+						Style:    discordgo.SuccessButton,
 						Disabled: false,
-						CustomID: "button2",
-					},
-
-					discordgo.Button{
-						Label:    "Bouton3",
-						Style:    discordgo.SecondaryButton,
-						Disabled: false,
-						CustomID: "button3",
+						CustomID: "scissors",
 					},
 				}},
 			}
@@ -232,9 +256,9 @@ var (
 			})
 
 			if err != nil {
-				log.Panicf("Unable to respond to the interaction: %v", err)
+				log.Printf("Unable to respond to the interaction: %v", err)
+				return
 			}
-
 		},
 	}
 
@@ -290,7 +314,7 @@ var (
 		},
 
 		{
-			Name:        "janken",
+			Name:        "mystère",
 			Description: "Je te défie au Pierre Feuille Ciseaux",
 		},
 	}
