@@ -129,7 +129,7 @@ var (
 			// If the choice was "principale"
 			case "principale":
 				url = user.AvatarURL("512")
-				typeAvatar = "principale"
+				typeAvatar = "Principale"
 
 			// If the choice was "serveur"
 			case "serveur":
@@ -142,7 +142,7 @@ var (
 				}
 
 				url = member.AvatarURL("512")
-				typeAvatar = "serveur"
+				typeAvatar = "Serveur"
 
 			default:
 				log.Printf("Kiyohime s'est perdu dans la bibliothèque de Chaldea")
@@ -195,7 +195,7 @@ var (
 					URL: url,
 				},
 				Footer: &discordgo.MessageEmbedFooter{
-					Text: fmt.Sprintf("%v, %v", user.Username, "bannière principale"),
+					Text: fmt.Sprintf("%v, %v", user.Username, "Bannière principale"),
 				},
 				Color: 0x00ff00,
 			}
@@ -367,25 +367,77 @@ func manageJanken(userChoice string) string {
 	return winner
 }
 
+var scheduledTimes = make(map[string]bool)
+
+func sendMessageAtDate(s *discordgo.Session, date string, message string, channel string) {
+	// Check if the message has already been scheduled for the current hour
+	if scheduledTimes[date] {
+		log.Println("The message has already been scheduled for the current hour")
+		return
+	}
+	// Parsing the date string
+	layout := "15:04"
+	parisLoc, err := time.LoadLocation("Europe/Paris")
+	if err != nil {
+		log.Fatalf("Error loading timezone")
+	}
+
+	t, err := time.ParseInLocation(layout, date, parisLoc)
+	if err != nil {
+		log.Fatalf("Error parsing date: %v", err)
+	}
+
+	// Checking if the current time is after the specified date
+	now := time.Now().In(parisLoc)
+
+	t = time.Date(now.Year(), now.Month(), now.Day(), t.Hour(), t.Minute(), 0, 0, parisLoc)
+
+	log.Printf("The current time is %v", now)
+	log.Printf("The specified time is %v", t)
+	// If the specified time is in the past, add 24 hours to it
+	if now.After(t) {
+		log.Printf("The specified time is in the past, adding 24 hours to it")
+		t = t.Add(24 * time.Hour)
+	}
+	// Scheduling the message to be sent at the specified date
+	time.AfterFunc(t.Sub(now), func() {
+		// Send the message
+		s.ChannelMessageSend(channel, message)
+		log.Printf("Message sent at %v", t)
+
+		// Mark the message as scheduled for the current hour
+		scheduledTimes[date] = false
+
+		// Schedule the message for the next day
+		sendMessageAtDate(s, date, message, channel)
+	})
+	scheduledTimes[date] = true
+}
+func sendAutoMessage(s *discordgo.Session) {
+	sendMessageAtDate(s, "12:00", "*Regarde* ", "747540564622442569")
+
+	sendMessageAtDate(s, "00:00", "Faîtes de beaux rêves", "747540564622442569")
+}
+
 func sendMessageAtMidnight(s *discordgo.Session) {
-	s.ChannelMessageSend("747540564622442569", "Transforming, Flame-Emitting Meditation")
+	s.ChannelMessageSend("747540564622442569", "Coeur sur Jeanne + Je vous souhaite une merveilleuse année 2024 !")
 }
 
 func sendMessageAtMidnight12(s *discordgo.Session) {
-	s.ChannelMessageSend("747540564622442569", "Bon app !!!")
+	s.ChannelMessageSend("747540564622442569", "Je vous aime tous !")
 }
 
 func sendMessageAt01(s *discordgo.Session) {
-	s.ChannelMessageSend("747540564622442569", "Allez dormir bandes de truands")
+	s.ChannelMessageSend("747540564622442569", "Coeur sur vous !")
 }
 
 func sendMessageAt02(s *discordgo.Session) {
-	s.ChannelMessageSend("747540564622442569", "Tsuki")
+	s.ChannelMessageSend("747540564622442569", "Tsukihime")
 }
 
 var isTaskSchedulded1 bool
 
-func scheduleTask1() {
+func scheduleTaskatMidnight() {
 	if isTaskSchedulded1 {
 		return
 	}
@@ -408,7 +460,7 @@ func scheduleTask1() {
 		sendMessageAtMidnight(s)
 		isTaskSchedulded1 = false
 
-		scheduleTask1()
+		scheduleTaskatMidnight()
 	})
 
 	isTaskSchedulded1 = true
@@ -416,7 +468,7 @@ func scheduleTask1() {
 
 var isTaskSchedulded2 bool
 
-func scheduleTask2() {
+func scheduleTaskat01() {
 	if isTaskSchedulded2 {
 		return
 	}
@@ -439,7 +491,7 @@ func scheduleTask2() {
 		sendMessageAt01(s)
 		isTaskSchedulded2 = false
 
-		scheduleTask2()
+		scheduleTaskat01()
 	})
 
 	isTaskSchedulded2 = true
@@ -447,7 +499,7 @@ func scheduleTask2() {
 
 var isTaskSchedulded3 bool
 
-func scheduleTask3() {
+func scheduleTaskat02() {
 	if isTaskSchedulded3 {
 		return
 	}
@@ -470,7 +522,7 @@ func scheduleTask3() {
 		sendMessageAt02(s)
 		isTaskSchedulded3 = false
 
-		scheduleTask3()
+		scheduleTaskat02()
 	})
 
 	isTaskSchedulded3 = true
@@ -478,7 +530,7 @@ func scheduleTask3() {
 
 var isTaskSchedulded12 bool
 
-func scheduleTask12() {
+func scheduleTaskat12() {
 	if isTaskSchedulded12 {
 		return
 	}
@@ -501,7 +553,7 @@ func scheduleTask12() {
 		sendMessageAtMidnight12(s)
 		isTaskSchedulded12 = false
 
-		scheduleTask12()
+		scheduleTaskat12()
 	})
 
 	isTaskSchedulded3 = true
@@ -554,7 +606,15 @@ func main() {
 	}
 
 	// Declare the intents
-	s.Identify.Intents = discordgo.IntentsAll
+
+	s.Identify.Intents = discordgo.IntentsMessageContent
+	/*
+		scheduleTaskatMidnight()
+		scheduleTaskat01()
+		scheduleTaskat02()
+		scheduleTaskat12()
+	*/
+	sendAutoMessage(s)
 
 	scheduleAllTasks()
 	defer s.Close()
