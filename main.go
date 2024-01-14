@@ -392,11 +392,8 @@ func sendMessageAtDate(s *discordgo.Session, date string, message string, channe
 
 	t = time.Date(now.Year(), now.Month(), now.Day(), t.Hour(), t.Minute(), 0, 0, parisLoc)
 
-	log.Printf("The current time is %v", now)
-	log.Printf("The specified time is %v", t)
 	// If the specified time is in the past, add 24 hours to it
 	if now.After(t) {
-		log.Printf("The specified time is in the past, adding 24 hours to it")
 		t = t.Add(24 * time.Hour)
 	}
 	// Scheduling the message to be sent at the specified date
@@ -417,153 +414,6 @@ func sendAutoMessage(s *discordgo.Session) {
 	sendMessageAtDate(s, "12:00", "*Regarde* ", "747540564622442569")
 
 	sendMessageAtDate(s, "00:00", "Faîtes de beaux rêves", "747540564622442569")
-}
-
-func sendMessageAtMidnight(s *discordgo.Session) {
-	s.ChannelMessageSend("747540564622442569", "Coeur sur Jeanne + Je vous souhaite une merveilleuse année 2024 !")
-}
-
-func sendMessageAtMidnight12(s *discordgo.Session) {
-	s.ChannelMessageSend("747540564622442569", "Je vous aime tous !")
-}
-
-func sendMessageAt01(s *discordgo.Session) {
-	s.ChannelMessageSend("747540564622442569", "Coeur sur vous !")
-}
-
-func sendMessageAt02(s *discordgo.Session) {
-	s.ChannelMessageSend("747540564622442569", "Tsukihime")
-}
-
-var isTaskSchedulded1 bool
-
-func scheduleTaskatMidnight() {
-	if isTaskSchedulded1 {
-		return
-	}
-
-	parisLoc, err := time.LoadLocation("Europe/Paris")
-	if err != nil {
-		log.Fatalf("Error loading timezone")
-	}
-
-	now := time.Now().In(parisLoc)
-	nextMidnight := time.Date(now.Year(), now.Month(), now.Day(), 00, 00, 0, 0, parisLoc)
-
-	if now.After(nextMidnight) {
-		nextMidnight = nextMidnight.Add(24 * time.Hour)
-	}
-
-	timeUntilNextTime := nextMidnight.Sub(now)
-
-	time.AfterFunc(timeUntilNextTime, func() {
-		sendMessageAtMidnight(s)
-		isTaskSchedulded1 = false
-
-		scheduleTaskatMidnight()
-	})
-
-	isTaskSchedulded1 = true
-}
-
-var isTaskSchedulded2 bool
-
-func scheduleTaskat01() {
-	if isTaskSchedulded2 {
-		return
-	}
-
-	parisLoc, err := time.LoadLocation("Europe/Paris")
-	if err != nil {
-		log.Fatalf("Error loading timezone")
-	}
-
-	now := time.Now().In(parisLoc)
-	nextTime := time.Date(now.Year(), now.Month(), now.Day(), 02, 00, 0, 0, parisLoc)
-
-	if now.After(nextTime) {
-		nextTime = nextTime.Add(24 * time.Hour)
-	}
-
-	timeUntilNextTime := nextTime.Sub(now)
-
-	time.AfterFunc(timeUntilNextTime, func() {
-		sendMessageAt01(s)
-		isTaskSchedulded2 = false
-
-		scheduleTaskat01()
-	})
-
-	isTaskSchedulded2 = true
-}
-
-var isTaskSchedulded3 bool
-
-func scheduleTaskat02() {
-	if isTaskSchedulded3 {
-		return
-	}
-
-	parisLoc, err := time.LoadLocation("Europe/Paris")
-	if err != nil {
-		log.Fatalf("Error loading timezone")
-	}
-
-	now := time.Now().In(parisLoc)
-	nextTime := time.Date(now.Year(), now.Month(), now.Day(), 01, 00, 0, 0, parisLoc)
-
-	if now.After(nextTime) {
-		nextTime = nextTime.Add(24 * time.Hour)
-	}
-
-	timeUntilMidnight := nextTime.Sub(now)
-
-	time.AfterFunc(timeUntilMidnight, func() {
-		sendMessageAt02(s)
-		isTaskSchedulded3 = false
-
-		scheduleTaskat02()
-	})
-
-	isTaskSchedulded3 = true
-}
-
-var isTaskSchedulded12 bool
-
-func scheduleTaskat12() {
-	if isTaskSchedulded12 {
-		return
-	}
-
-	parisLoc, err := time.LoadLocation("Europe/Paris")
-	if err != nil {
-		log.Fatalf("Error loading timezone")
-	}
-
-	now := time.Now().In(parisLoc)
-	nextTime := time.Date(now.Year(), now.Month(), now.Day(), 12, 00, 0, 0, parisLoc)
-
-	if now.After(nextTime) {
-		nextTime = nextTime.Add(24 * time.Hour)
-	}
-
-	timeUntilMidnight := nextTime.Sub(now)
-
-	time.AfterFunc(timeUntilMidnight, func() {
-		sendMessageAtMidnight12(s)
-		isTaskSchedulded12 = false
-
-		scheduleTaskat12()
-	})
-
-	isTaskSchedulded3 = true
-}
-
-func scheduleAllTasks() {
-	scheduleTask1()
-	scheduleTask2()
-	scheduleTask3()
-	scheduleTask12()
 }
 
 func main() {
@@ -615,8 +465,6 @@ func main() {
 		scheduleTaskat12()
 	*/
 	sendAutoMessage(s)
-
-	scheduleAllTasks()
 	defer s.Close()
 	// Close the discord session
 
