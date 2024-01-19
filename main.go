@@ -210,7 +210,7 @@ var (
 			})
 		},
 
-		"Janken": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		"janken": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 			embed := &discordgo.MessageEmbed{
 				Title:       "Prépare-toi !",
@@ -314,7 +314,7 @@ var (
 		},
 
 		{
-			Name:        "mystère",
+			Name:        "janken",
 			Description: "Je te défie au Pierre Feuille Ciseaux",
 		},
 	}
@@ -367,9 +367,39 @@ func manageJanken(userChoice string) string {
 	return winner
 }
 
+func findIDGuild(s *discordgo.Session, name string) string {
+	for _, guild := range s.State.Guilds {
+		if guild.Name == name {
+			return guild.ID
+		}
+	}
+	return ""
+}
+
+func getRandomName(s *discordgo.Session, guildID string) string {
+	members, err := s.GuildMembers(guildID, "", 1000)
+	if err != nil {
+		log.Fatalf("Error retrieving members: %v", err)
+	}
+
+	randomIndex := rand.Intn(len(members))
+	randomMember := members[randomIndex]
+
+	return randomMember.User.Username
+}
+
+func getLastAuthor(s *discordgo.Session, channelID string) string {
+	messages, err := s.ChannelMessages(channelID, 1, "", "", "")
+	if err != nil {
+		log.Fatalf("Error retrieving messages: %v", err)
+	}
+
+	return messages[0].Author.Username
+}
+
 var scheduledTimes = make(map[string]bool)
 
-func sendMessageAtDate(s *discordgo.Session, date string, message string, channel string) {
+func sendMessageAtDate(s *discordgo.Session, date string, messageFunc func() string, channel string) {
 	// Check if the message has already been scheduled for the current hour
 	if scheduledTimes[date] {
 		log.Println("The message has already been scheduled for the current hour")
@@ -399,6 +429,7 @@ func sendMessageAtDate(s *discordgo.Session, date string, message string, channe
 	// Scheduling the message to be sent at the specified date
 	time.AfterFunc(t.Sub(now), func() {
 		// Send the message
+		message := messageFunc()
 		s.ChannelMessageSend(channel, message)
 		log.Printf("Message sent at %v", t)
 
@@ -406,14 +437,17 @@ func sendMessageAtDate(s *discordgo.Session, date string, message string, channe
 		scheduledTimes[date] = false
 
 		// Schedule the message for the next day
-		sendMessageAtDate(s, date, message, channel)
+		sendMessageAtDate(s, date, messageFunc, channel)
 	})
 	scheduledTimes[date] = true
 }
 func sendAutoMessage(s *discordgo.Session) {
-	sendMessageAtDate(s, "12:00", "*Regarde* ", "747540564622442569")
-
-	sendMessageAtDate(s, "00:00", "Faîtes de beaux rêves", "747540564622442569")
+	sendMessageAtDate(s, "12:00", func() string {
+		return fmt.Sprintf("*Regarde %v et %v*", getLastAuthor(s, "747540564622442569"), getRandomName(s, "747540564135772221"))
+	}, "747540564622442569")
+	sendMessageAtDate(s, "00:00", func() string {
+		return fmt.Sprintf("*Faîtes de beaux rêves*")
+	}, "747540564622442569")
 }
 
 func main() {
@@ -458,12 +492,7 @@ func main() {
 	// Declare the intents
 
 	s.Identify.Intents = discordgo.IntentsMessageContent
-	/*
-		scheduleTaskatMidnight()
-		scheduleTaskat01()
-		scheduleTaskat02()
-		scheduleTaskat12()
-	*/
+
 	sendAutoMessage(s)
 	defer s.Close()
 	// Close the discord session
