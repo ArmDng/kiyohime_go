@@ -2,14 +2,12 @@ package main
 
 import (
 	"fmt"
+	"github.com/bwmarrin/discordgo"
 	"log"
 	"math/rand"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
-
-	"github.com/bwmarrin/discordgo"
 )
 
 var (
@@ -174,10 +172,13 @@ var (
 
 		"bannière": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
-			var url string
+			var (
+				url        string
+				typeBanner string
+			)
 
 			// Getting the data needed from the slash commands pp
-
+			choiceOption := i.ApplicationCommandData().Options[1].StringValue()
 			userID := i.ApplicationCommandData().Options[0].UserValue(s).ID
 
 			// Getting the data of the user
@@ -186,16 +187,38 @@ var (
 				log.Printf("Unable to retrieve the user: %v", err)
 			}
 
-			// Getting the URL of the banner
-			url = user.BannerURL("512")
-			// Creation of the embed message
+			switch choiceOption {
 
+			// If the choice was "principale"
+			case "principale":
+				url = user.AvatarURL("512")
+				typeBanner = "Principale"
+
+			// If the choice was "serveur"
+			case "serveur":
+
+				// Getting the data of the member (user of a server)
+				member, err := s.GuildMember(i.GuildID, userID)
+				if err != nil {
+					log.Printf("Unable to retrieve the member: %v", err)
+					return
+				}
+
+				url = member.BannerURL("512")
+				typeBanner = "Serveur"
+
+			default:
+				log.Printf("Kiyohime s'est perdu dans la bibliothèque de Chaldea")
+				return
+			}
+
+			// Creation of the embed message
 			embed := &discordgo.MessageEmbed{
 				Image: &discordgo.MessageEmbedImage{
 					URL: url,
 				},
 				Footer: &discordgo.MessageEmbedFooter{
-					Text: fmt.Sprintf("%v, %v", user.Username, "Bannière principale"),
+					Text: fmt.Sprintf("%v, %v", user.Username, typeBanner),
 				},
 				Color: 0x00ff00,
 			}
@@ -310,6 +333,22 @@ var (
 					Description: "L'utilisateur dont vous voulez voir la bannière",
 					Required:    true,
 				},
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "type",
+					Description: "Principale ou Serveur",
+					Required:    true,
+					Choices: []*discordgo.ApplicationCommandOptionChoice{
+						{
+							Name:  "Principale",
+							Value: "principale",
+						},
+						{
+							Name:  "Serveur",
+							Value: "serveur",
+						},
+					},
+				},
 			},
 		},
 
@@ -397,59 +436,6 @@ func getLastAuthor(s *discordgo.Session, channelID string) string {
 	return messages[0].Author.Username
 }
 
-var scheduledTimes = make(map[string]bool)
-
-func sendMessageAtDate(s *discordgo.Session, date string, messageFunc func() string, channel string) {
-	// Check if the message has already been scheduled for the current hour
-	if scheduledTimes[date] {
-		log.Println("The message has already been scheduled for the current hour")
-		return
-	}
-	// Parsing the date string
-	layout := "15:04"
-	parisLoc, err := time.LoadLocation("Europe/Paris")
-	if err != nil {
-		log.Fatalf("Error loading timezone")
-	}
-
-	t, err := time.ParseInLocation(layout, date, parisLoc)
-	if err != nil {
-		log.Fatalf("Error parsing date: %v", err)
-	}
-
-	// Checking if the current time is after the specified date
-	now := time.Now().In(parisLoc)
-
-	t = time.Date(now.Year(), now.Month(), now.Day(), t.Hour(), t.Minute(), 0, 0, parisLoc)
-
-	// If the specified time is in the past, add 24 hours to it
-	if now.After(t) {
-		t = t.Add(24 * time.Hour)
-	}
-	// Scheduling the message to be sent at the specified date
-	time.AfterFunc(t.Sub(now), func() {
-		// Send the message
-		message := messageFunc()
-		s.ChannelMessageSend(channel, message)
-		log.Printf("Message sent at %v", t)
-
-		// Mark the message as scheduled for the current hour
-		scheduledTimes[date] = false
-
-		// Schedule the message for the next day
-		sendMessageAtDate(s, date, messageFunc, channel)
-	})
-	scheduledTimes[date] = true
-}
-func sendAutoMessage(s *discordgo.Session) {
-	sendMessageAtDate(s, "12:00", func() string {
-		return fmt.Sprintf("*Regarde %v et %v*", getLastAuthor(s, "747540564622442569"), getRandomName(s, "747540564135772221"))
-	}, "747540564622442569")
-	sendMessageAtDate(s, "00:00", func() string {
-		return fmt.Sprintf("*Faîtes de beaux rêves*")
-	}, "747540564622442569")
-}
-
 func main() {
 
 	s.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
@@ -492,8 +478,6 @@ func main() {
 	// Declare the intents
 
 	s.Identify.Intents = discordgo.IntentsMessageContent
-
-	sendAutoMessage(s)
 	defer s.Close()
 	// Close the discord session
 
