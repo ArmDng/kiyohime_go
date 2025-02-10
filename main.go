@@ -191,7 +191,7 @@ var (
 
 			// If the choice was "principale"
 			case "principale":
-				url = user.AvatarURL("512")
+				url = user.BannerURL("512")
 				typeBanner = "Principale"
 
 			// If the choice was "serveur"
